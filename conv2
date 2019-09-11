@@ -36,7 +36,7 @@ Mat conv2(const Mat &img, const Mat& ikernel, ConvolutionType type)
  {
   source = Mat();
   const int additionalRows = kernel.rows-1, additionalCols = kernel.cols-1;
-  copyMakeBorder(img, source, (additionalRows+1)/2, (additionalRows+1)/2, (additionalCols+1)/2, (additionalCols+1)/2, BORDER_CONSTANT, Scalar(0));
+  copyMakeBorder(img, source, (additionalRows+1)/2, (additionalRows)/2, (additionalCols+1)/2, (additionalCols)/2, BORDER_CONSTANT, Scalar(0));
  }
  //Point anchor(kernel.cols - kernel.cols/2 - 1, kernel.rows - kernel.rows/2 - 1);
  Point anchor(-1, -1);
