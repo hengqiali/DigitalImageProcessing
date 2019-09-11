@@ -1,2 +1,71 @@
 https://blog.csdn.net/u014267567/article/details/53842915
 https://blog.csdn.net/xiaoyanghijk/article/details/52073162  关于full\same\valid如何来的
+OpenCV实现MATLAB的conv2
+Matlab中的conv2计算的是卷积，不是相关，即需要将卷积核顺时针旋转180度，
+并且基准心是核的中心
+在full模式下，same模式下自动填充0
+在valid模式下，直接进行卷积
+
+
+而在opencv下，卷积其实不是卷积，而且相关，默认是填充0，默认模式是same，所以对source图像进行填充0就是full，进行裁剪就是valid
+
+#include <iostream>
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
+using namespace std;
+using namespace cv;
+
+enum ConvolutionType { 
+ /* Return the full convolution, including border */
+ CONVOLUTION_FULL, 
+ 
+ /* Return only the part that corresponds to the original image */
+ CONVOLUTION_SAME,
+ /* Return only the submatrix containing elements that were not influenced by the border */
+ CONVOLUTION_VALID
+};
+Mat conv2(const Mat &img, const Mat& ikernel, ConvolutionType type) 
+{
+ Mat dest;
+ Mat kernel;
+ flip(ikernel,kernel,-1);
+ Mat source = img;
+ if(CONVOLUTION_FULL == type) 
+ {
+  source = Mat();
+  const int additionalRows = kernel.rows-1, additionalCols = kernel.cols-1;
+  copyMakeBorder(img, source, (additionalRows+1)/2, (additionalRows+1)/2, (additionalCols+1)/2, (additionalCols+1)/2, BORDER_CONSTANT, Scalar(0));
+ }
+ //Point anchor(kernel.cols - kernel.cols/2 - 1, kernel.rows - kernel.rows/2 - 1);
+ Point anchor(-1, -1);
+ int borderMode = BORDER_CONSTANT;
+ filter2D(source, dest, img.depth(), kernel, anchor, 0, borderMode); //same
+ 
+ if(CONVOLUTION_VALID == type) 
+ {
+  dest = dest.colRange((kernel.cols-1)/2, dest.cols - kernel.cols/2).rowRange((kernel.rows-1)/2, dest.rows - kernel.rows/2);
+ }
+ return dest;
+}
+
+
+int main()
+{
+	double a[81];
+	double b[25];
+	for(int i = 1; i <= 81; i++)
+		a[i-1] = i;
+	for(int i = 1; i <= 25; i++)
+		b[i-1] = 0.5;
+	Mat A(9,9,CV_64F,a);
+	Mat B(5,5,CV_64F, b);
+	cout << A << endl << endl;
+	cout << B << endl << endl;
+	Mat C = conv2(A,B,CONVOLUTION_VALID);
+	Mat D = conv2(A,B,CONVOLUTION_FULL);
+	
+	cout<<"valid:"<<endl<<C<<endl<<endl<<"full:"<<endl<<D<<endl;
+	return 0;
+}
